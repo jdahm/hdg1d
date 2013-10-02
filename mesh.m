@@ -10,8 +10,8 @@ function md = mesh(xs, xe, ne)
   %   md : mesh data
   %
 
-  md.ne = 1;
-  md.xs = 0.;
-  md.xe = 1.;
+  md.ne = ne;
+  md.xs = xs;
+  md.xe = xe;
   md.dx = (xe-xs)/ne;
 

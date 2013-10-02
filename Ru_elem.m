@@ -54,17 +54,17 @@ function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh, td, fd, sd, dx, qd)
   I1   = dx * qd.wPhi'*qd.dw*ones([nq,1])*td.u_t;
   I1_U = dx * qd.wPhi'*qd.dw*(td.c*qd.uPhi);
 
-  % I2 = (H,grad(w)) = (U,w_x) (1D)
+  % I2 = (H,grad(w)) = (H,w_x) (1D)
   I2   = dx * wgPhi'*qd.dw*f;
   I2_Q = dx * wgPhi'*qd.dw*f_Q;
   I2_U = dx * wgPhi'*qd.dw*f_U;
 
   % I3 = <HH,w> = f1*wPhi1' - f0*wPhi0' (1D)
   I3 = f1*qd.wPhi1' - f0*qd.wPhi0';
-  I3_Q = f_Q1*qd.wPhi1' - f_Q0*qd.wPhi0';
-  I3_U = f_U1*qd.wPhi1' - f_U0*qd.wPhi0';
-  I3_UH(:,1) = -1.0*f_UH0*qd.wPhi0';
-  I3_UH(:,2) = f_UH1*qd.wPhi1';
+  I3_Q = bsxfun(@times, qd.wPhi1', f_Q1) - bsxfun(@times, qd.wPhi0', f_Q0);
+  I3_U = bsxfun(@times, qd.wPhi1', f_U1) - bsxfun(@times, qd.wPhi0', f_U0);
+  I3_UH(:,1) = -bsxfun(@times, qd.wPhi0', f_UH0);
+  I3_UH(:,2) = bsxfun(@times, qd.wPhi1', f_UH1);
 
   % I4 = (S,w)
   I4   = dx * qd.wPhi'*qd.dw*s;
