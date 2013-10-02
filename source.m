@@ -19,7 +19,7 @@ function [s, s_q, s_u] = source(q, u, xg, sd)
     switch (sd.type)
       case 'ms_quadratic'
 	% u=2x-x^2 on [0,2]
-	s = 2-2*xg+2;
+	s = 2*xg;
 	s_q = zeros(size(q));
 	s_u = zeros(size(u));
       otherwise
