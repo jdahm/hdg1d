@@ -24,9 +24,7 @@ function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   dL = K\R;
 
   % 3. Post-linear solve
-  %[dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd);
-  dQ = zeros(size(Q));
-  dU = zeros(size(U));
+  [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd);
 
 function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   % function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
@@ -64,9 +62,13 @@ function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     LE(2,1) = 0.;
   end
 
-  [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = residual_belem(QE, UE, LE, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+  xglob = qd.x*md.dx;
 
-  [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
+  [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+  residual_belem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+
+  [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
+				 Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
 
   if md.ne ~= 1
     B(1,2) = BK(2,2);
@@ -79,9 +81,13 @@ function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     UE = U((elem-1)*nnu+1:elem*nnu);
     LE = L(elem-1:elem);
 
-    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = residual_ielem(QE, UE, LE, md.dx, td, fd, sd, qd);
+    xg = (md.ne-1)*md.dx+qd.x*md.dx;
 
-    [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
+    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+    residual_ielem(QE, UE, LE, xg, md.dx, td, fd, sd, qd);
+
+    [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
+				   Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
 
     B(elem-1,2) = B(elem-1,2) + BK(1,1);
     B(elem-1,1) = B(elem-1,1) + BK(2,1);
@@ -95,13 +101,16 @@ function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     QE = Q((md.ne-1)*nnq+1:md.ne*nnq);
     UE = U((md.ne-1)*nnu+1:md.ne*nnu);
     LE = [L(md.ne-1); 0.];
-    LE
     lisb = false;
     risb = true;
 
-    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = residual_belem(QE, UE, LE, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    xg = (md.ne-1)*md.dx+qd.x*md.dx;
 
-    [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
+    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+    residual_belem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+
+    [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
+				   Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
 
     B(md.ne-1,2) = B(md.ne-1,2) + BK(1,1);
     R(md.ne-1) = R(md.ne-1) + BR(1);
@@ -148,9 +157,13 @@ function [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     dLE(2,1) = 0.;
   end
 
-  [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = residual_belem(QE, UE, LE, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+  xg = qd.x*md.dx;
 
-  [dQE, dUE] = qu_backsolve(dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
+  [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+  residual_belem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+
+  [dQE, dUE] = qu_backsolve(dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
+			    Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
 
   dQ(1:nnq) = dQE;
   dU(1:nnu) = dUE;
@@ -162,9 +175,13 @@ function [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     LE = L(elem-1:elem);
     dLE = dL(elem-1:elem);
 
-    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = residual_ielem(QE, UE, LE, md.dx, td, fd, sd, qd);
+    xg = (elem-1)*md.dx+qd.x*md.dx;
 
-    [dQE, dUE] = qu_backsolve(dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
+    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+    residual_ielem(QE, UE, LE, xg, md.dx, td, fd, sd, qd);
+
+    [dQE, dUE] = qu_backsolve(dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
+			      Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
 
     dQ((elem-1)*nnq+1:elem*nnq) = dQE;
     dU((elem-1)*nnu+1:elem*nnu) = dUE;
@@ -175,21 +192,26 @@ function [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     QE = Q((md.ne-1)*nnq+1:md.ne*nnq);
     UE = U((md.ne-1)*nnu+1:md.ne*nnu);
     LE  = [L(md.ne-1); 0.];
-    dLE = [L(md.ne-1); 0.];
+    dLE = [dL(md.ne-1); 0.];
 
     lisb = false;
     risb = true;
 
-    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = residual_belem(QE, UE, LE, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    xg = (md.ne-1)*md.dx+qd.x*md.dx;
 
-    [dQE, dUE] = qu_backsolve(dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
+    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+    residual_belem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+
+    [dQE, dUE] = qu_backsolve(dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
+			      Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
 
     dQ((md.ne-1)*nnq+1:md.ne*nnq) = dQE;
     dU((md.ne-1)*nnu+1:md.ne*nnu) = dUE;
   end
 
 
-function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = residual_belem(Q, U, L, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
+function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+	 residual_belem(Q, U, L, xg, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
 
   nnu = size(qd.qPhi, 2);
   nnq = size(qd.uPhi, 2);
@@ -206,11 +228,8 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = re
     UH(1) = ub;
     UH_Q(1,:) = ub_q*qd.qPhi0;
     UH_U(1,:) = ub_u*qd.uPhi0;
-    UH_L(1,1) = 0.;
   else
     UH(1) = L(1);
-    UH_Q(1,:) = zeros(size(qd.qPhi1));
-    UH_U(1,:) = zeros(size(qd.uPhi1));
     UH_L(1,1) = 1.;
   end
 
@@ -222,11 +241,8 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = re
     UH(2) = ub;
     UH_Q(2,:) = ub_q*qd.qPhi1;
     UH_U(2,:) = ub_u*qd.uPhi1;
-    UH_L(2,2) = 0.;
   else
     UH(2) = L(2);
-    UH_Q(2,:) = zeros(size(qd.qPhi1));
-    UH_U(2,:) = zeros(size(qd.uPhi1));
     UH_L(2,2) = 1.;
   end
 
@@ -235,7 +251,7 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = re
   Rq_U = Rq_U + Rq_UH*UH_U;
   Rq_L = Rq_UH*UH_L;
 
-  [Ru, Ru_Q, Ru_U, Ru_UH] = Ru_elem(Q, U, UH, td, fd, sd, dx, qd);
+  [Ru, Ru_Q, Ru_U, Ru_UH] = Ru_elem(Q, U, UH, xg, td, fd, sd, dx, qd);
   Ru_Q = Ru_Q + Ru_UH*UH_Q;
   Ru_U = Ru_U + Ru_UH*UH_U;
   Ru_L = Ru_UH*UH_L;
@@ -245,16 +261,19 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = re
   Rl_U = Rl_U + Rl_UH*UH_U;
   Rl_L = Rl_UH*UH_L;
 
-function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = residual_ielem(Q, U, L, dx, td, fd, sd, qd)
+
+function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+	 residual_ielem(Q, U, L, xg, dx, td, fd, sd, qd)
 
   [Rq, Rq_Q, Rq_U, Rq_L] = Rq_elem(Q, U, L, dx, qd);
 
-  [Ru, Ru_Q, Ru_U, Ru_L] = Ru_elem(Q, U, L, td, fd, sd, dx, qd);
+  [Ru, Ru_Q, Ru_U, Ru_L] = Ru_elem(Q, U, L, xg, td, fd, sd, dx, qd);
 
   [Rl, Rl_Q, Rl_U, Rl_L] = Rl_elem(Q, U, L, fd, false, false, qd);
 
 
-function [dQ, dU] = qu_backsolve(dL, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, q_present)
+function [dQ, dU] = qu_backsolve(dL, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
+				 Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, q_present)
 
   % pre-process A matrix
   [AQQ, AQU, AUQ, AUU] = preprocess_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
@@ -264,7 +283,8 @@ function [dQ, dU] = qu_backsolve(dL, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, R
   [dQ, dU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq, Ru, q_present);
 
 
-function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, q_present)
+function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
+					Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, q_present)
 
   % initialize matrix and vector
   % BK = D

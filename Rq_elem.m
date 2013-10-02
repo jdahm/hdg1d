@@ -20,7 +20,7 @@ function [R, R_Q, R_U, R_UH] = Rq_elem(Q, U, uh, dx, qd)
   q = qd.qPhi * Q;
   u = qd.uPhi * U;
 
-  vgPhi = qd.vGPhi*dx;
+  vgPhi = qd.vGPhi/dx;
 
   % Rq = (q,v) + (u,div(v)) - <uh,v.n>
 
@@ -34,7 +34,7 @@ function [R, R_Q, R_U, R_UH] = Rq_elem(Q, U, uh, dx, qd)
 
   % I3 = <uh,v.n> = uh1*vPhi1' - uh0*vPhi0' (1D)
   I3 = uh(2)*qd.vPhi1' - uh(1)*qd.vPhi0';
-  I3_UH(:,1) = -1.0*qd.vPhi0';
+  I3_UH(:,1) = -qd.vPhi0';
   I3_UH(:,2) = qd.vPhi1';
 
   R = I1 + I2 - I3;

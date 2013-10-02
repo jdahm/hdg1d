@@ -1,5 +1,5 @@
-function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh, td, fd, sd, dx, qd)
-  % function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh, td, fd, sd, dx, qd)
+function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh, xg, td, fd, sd, dx, qd)
+  % function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh, xg, td, fd, sd, dx, qd)
   %
   % PURPOSE: Computes the bilinear form Ru((q,u,uh),w) : Qh x Uh x Mh x Wh -> Wh*
   % restricted to an element and linearization wrt each input. This is:
@@ -9,6 +9,7 @@ function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh, td, fd, sd, dx, qd)
   % INPUTS:
   %   {Q,U} : basis coefficients for {grad(u),u} [nn{q,u}]
   %   uh : u|{0,1}, that is, the trace of u at the boundaries of the element
+  %   xg : global positions of quadrature nodes [nq]
   %   td : time data [struct]
   %   dx : size of the element [1]
   %   qd : quadrature data [struct]
@@ -36,15 +37,15 @@ function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh, td, fd, sd, dx, qd)
   f_Q1 = bsxfun(@times, f_q1, qd.qPhi1);
   f_U1 = bsxfun(@times, f_u1, qd.uPhi1);
 
-  [f, f_q, f_u] = flux(q,u,fd);
+  [f, f_q, f_u] = flux(q, u, fd);
   f_Q = bsxfun(@times, f_q, qd.qPhi);
   f_U = bsxfun(@times, f_u, qd.uPhi);
 
-  [s, s_q, s_u] = source(q,u,sd);
+  [s, s_q, s_u] = source(q, u, xg, sd);
   s_Q = bsxfun(@times, s_q, qd.qPhi);
   s_U = bsxfun(@times, s_u, qd.uPhi);
 
-  wgPhi = qd.wGPhi*dx;
+  wgPhi = qd.wGPhi/dx;
 
   % Ru = (u_t,w) - (H,grad(w)) + <HH,w> + (S,w)
 
