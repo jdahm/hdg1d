@@ -29,19 +29,25 @@ function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh, xg, td, fd, sd, dx, qd)
   u0 = qd.uPhi0 * U;
   u1 = qd.uPhi1 * U;
 
-  [f0, f_q0, f_u0, f_UH0] = flux_oneside(q0, u0, uh(1), fd);
-  f_Q0 = bsxfun(@times, f_q0, qd.qPhi0);
-  f_U0 = bsxfun(@times, f_u0, qd.uPhi0);
+  [h0, h_q0, h_UH0] = flux(q0, uh(1), fd);
+  [s0, s_q0, s_u0, s_UH0] = flux_stab(q0, u0, uh(1), fd);
+  f0 = h0 + s0;
+  f_Q0 = bsxfun(@times, h_q0+s_q0, qd.qPhi0);
+  f_U0 = bsxfun(@times, s_u0, qd.uPhi0);
+  f_UH0 = h_UH0 + s_UH0;
 
-  [f1, f_q1, f_u1, f_UH1] = flux_oneside(q1, u1, uh(2), fd);
-  f_Q1 = bsxfun(@times, f_q1, qd.qPhi1);
-  f_U1 = bsxfun(@times, f_u1, qd.uPhi1);
+  [h1, h_q1, h_UH1] = flux(q1, uh(2), fd);
+  [s1, s_q1, s_u1, s_UH1] = flux_stab(q1, u1, uh(2), fd);
+  f1 = h1 + s1;
+  f_Q1 = bsxfun(@times, h_q1+s_q1, qd.qPhi1);
+  f_U1 = bsxfun(@times, s_u1, qd.uPhi1);
+  f_UH1 = h_UH1 + s_UH1;
 
   [f, f_q, f_u] = flux(q, u, fd);
   f_Q = bsxfun(@times, f_q, qd.qPhi);
   f_U = bsxfun(@times, f_u, qd.uPhi);
 
-  [s, s_q, s_u] = source(q, u, xg, sd);
+  [s, s_q, s_u] = source(q, u, xg, fd, sd);
   s_Q = bsxfun(@times, s_q, qd.qPhi);
   s_U = bsxfun(@times, s_u, qd.uPhi);
 

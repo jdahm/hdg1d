@@ -17,11 +17,11 @@ function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %   d{Q,U} : update for {Q,U} [nelem*nn{q,u}]
   %   dL : update for L [nelem-1]
 
-  % 1. Build system
+  % 1. Build system (K*L+R=0)
   [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd);
 
   % 2. Solve reduced HDG system (linear solve)
-  dL = K\R;
+  dL = -K\R;
 
   % 3. Post-linear solve
   [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd);
@@ -89,10 +89,12 @@ function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 				   Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
 
+    % self-block
     B(elem-1,2) = B(elem-1,2) + BK(1,1);
+    B(elem,2)   = B(elem,2)   + BK(2,2);
+    % off-diagonal entries
     B(elem-1,1) = B(elem-1,1) + BK(2,1);
-    B(elem-1,3) = B(elem-1,3) + BK(1,2);
-    B(elem,2)   = B(elem,2)   + BK(2,2);    
+    B(elem,3) = B(elem,3) + BK(1,2);
     R(elem-1:elem) = R(elem-1:elem) + BR;
   end
 
@@ -290,20 +292,17 @@ function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
   % BK = D
   % BR = H
   BK = Rl_L;
-  BR = -Rl; % want -R on RHS
+  BR = Rl;
 
   % pre-process A matrix
   [AQQ, AQU, AUQ, AUU] = preprocess_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
 
-  % subtract CA^{-1}B from BK
-  % loop over faces (in 1D, left then right)
+  % subtract C(A^{-1}B) from BK
   [iABQ, iABU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq_L, Ru_L, q_present);
   BK = BK - (Rl_Q*iABQ + Rl_U*iABU);
 
-  % subtract C*A^{-1}*F from BR, where F=-[Rq;Ru]
-  % this time A^{-1} multiplies a vector (F) from the left, so don't
-  % need to loop over faces (columns) of F
-  [iAFQ, iAFU] = apply_Ainv(AQQ, AQU, AUQ, AUU, -Rq, -Ru, q_present);
+  % subtract C(A^{-1}F) from BR, where F=[Rq;Ru]
+  [iAFQ, iAFU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq, Ru, q_present);
   BR = BR - (Rl_Q*iAFQ + Rl_U*iAFU);
 
 function [AQQ, AQU, AUQ, AUU] = preprocess_A(AQQ, AQU, AUQ, AUU, q_present)

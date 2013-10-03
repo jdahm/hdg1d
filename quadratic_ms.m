@@ -3,9 +3,9 @@
 fd.a = 1.0;
 fd.b = 1.0;
 fd.q_present = true;
-fd.stab = 1.0;
+fd.vl = 1.0;
 
-sd.present = true;
+sd.present = false;
 sd.type = 'ms_quadratic';
 
 %dt = 1.0;
@@ -18,7 +18,7 @@ pv = 2;
 pu = 2;
 pw = 2;
 
-md = mesh(0., 2., 5);
+md = mesh(0., 2., 2);
 
 xnq = linspace(0,1,pq+1)';
 xnv = linspace(0,1,pv+1)';
@@ -26,15 +26,15 @@ xnu = linspace(0,1,pu+1)';
 xnw = linspace(0,1,pw+1)';
 
 lbd.type = 'd';
-lbd.data = 0.0;
+lbd.data = 0.;
 rbd.type = 'd';
-rbd.data = 0.0;
+rbd.data = 0.;
 
 [Q, U, L] = initialize(pq, pu, md.ne);
 
 qd = quadrature_data(xnq, xnu, xnv, xnw);
 
-[dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
+[dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd);
 
 Q = Q + dQ;
 U = U + dU;

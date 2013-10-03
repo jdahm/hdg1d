@@ -1,5 +1,5 @@
-function [s, s_q, s_u] = source(q, u, xg, sd)
-  % function [s, s_q, s_u] = source(q, u, xg, sd)
+function [s, s_q, s_u] = source(q, u, xg, fd, sd)
+  % function [s, s_q, s_u] = source(q, u, xg, fd, sd)
   %
   % PURPOSE: Computes the source term at an arbitrary number of points.
   %
@@ -7,6 +7,7 @@ function [s, s_q, s_u] = source(q, u, xg, sd)
   %   q : gradient of scalar (derivative in 1D: u_x) [np]
   %   u : scalar [np]
   %   xglob : global positions of quadrature nodes [np]
+  %   fd : flux data [struct]
   %   sd : source data [struct]
   %
   % OUTPUTS:
@@ -16,12 +17,13 @@ function [s, s_q, s_u] = source(q, u, xg, sd)
   %
 
   if sd.present
+    s_q = zeros(size(q));
+    s_u = zeros(size(u));
     switch (sd.type)
       case 'ms_quadratic'
 	% u=2x-x^2 on [0,2]
-	s = 2*xg;
-	s_q = zeros(size(q));
-	s_u = zeros(size(u));
+	% S = -a*u_x + b*u_xx = -a*(2-2*x)+b*(-2) = -2*(a+b)+2*x*a
+	s = -2*(fd.a+fd.b)+2*fd.a*xg;
       otherwise
 	error('unknown source term');
     end

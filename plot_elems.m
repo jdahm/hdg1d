@@ -23,11 +23,12 @@ function h = plot_elems(xs, xe, xn, U, np)
 
   dx = (xe-xs)/ne;
 
+  clf;
   hold on;
   for elem=1:ne
       y = Phi*U((elem-1)*nn+1:elem*nn);
       x = xs+(elem-1)*dx+dx*xp;
-      h = plot(x,y,'.--');
+      h = plot(x,y,'.-');
   end
   hold off;
   
