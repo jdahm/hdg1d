@@ -2,7 +2,7 @@ function [ub, ub_q, ub_u] = boundary_state(q, u, td, fd, bd)
   % function [ub, ub_q, ub_u] = boundary_state(q, u, td, fd, bd)
   %
   % PURPOSE: Computes the boundary state ub(q,u) and linearization
-  % at an arbitrary number of points.
+  % at a point.
   %
   % INPUTS:
   %   q : grad(u) (= u_x for 1D) at points [np]
@@ -22,6 +22,10 @@ function [ub, ub_q, ub_u] = boundary_state(q, u, td, fd, bd)
       ub = bd.data(1);
       ub_q = 0.;
       ub_u = 0.;
+    case 'n'
+      ub = u;
+      ub_q = 0.;
+      ub_u = 1.;
     otherwise
       error('unknown boundary type');
   end

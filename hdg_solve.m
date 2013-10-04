@@ -1,7 +1,7 @@
 function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   % function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %
-  % PURPOSE: Builds the HDG system K*L=R, solves it, then computes the updates to Q, U, L
+  % PURPOSE: Builds the HDG system K*L=F, solves it, then computes the updates to Q, U, L
   %
   % INPUTS:
   %   {Q,U} : basis coefficients for {grad(u),u} [nelem*nn{q,u}]
@@ -17,11 +17,11 @@ function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %   d{Q,U} : update for {Q,U} [nelem*nn{q,u}]
   %   dL : update for L [nelem-1]
 
-  % 1. Build system (K*L+R=0)
-  [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd);
+  % 1. Build system (K*L=F) (F=-Residual)
+  [K, F] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd);
 
   % 2. Solve reduced HDG system (linear solve)
-  dL = -K\R;
+  dL = K\F;
 
   % 3. Post-linear solve
   [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd);
@@ -253,7 +253,7 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ..
   Rq_U = Rq_U + Rq_UH*UH_U;
   Rq_L = Rq_UH*UH_L;
 
-  [Ru, Ru_Q, Ru_U, Ru_UH] = Ru_elem(Q, U, UH, xg, td, fd, sd, dx, qd);
+  [Ru, Ru_Q, Ru_U, Ru_UH] = Ru_elem(Q, U, UH, xg, td, fd, sd, dx, lisb, risb, qd);
   Ru_Q = Ru_Q + Ru_UH*UH_Q;
   Ru_U = Ru_U + Ru_UH*UH_U;
   Ru_L = Ru_UH*UH_L;
@@ -269,7 +269,7 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ..
 
   [Rq, Rq_Q, Rq_U, Rq_L] = Rq_elem(Q, U, L, dx, qd);
 
-  [Ru, Ru_Q, Ru_U, Ru_L] = Ru_elem(Q, U, L, xg, td, fd, sd, dx, qd);
+  [Ru, Ru_Q, Ru_U, Ru_L] = Ru_elem(Q, U, L, xg, td, fd, sd, dx, false, false, qd);
 
   [Rl, Rl_Q, Rl_U, Rl_L] = Rl_elem(Q, U, L, fd, false, false, qd);
 
@@ -280,6 +280,7 @@ function [dQ, dU] = qu_backsolve(dL, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
   % pre-process A matrix
   [AQQ, AQU, AUQ, AUU] = preprocess_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
 
+  % F - B*dL
   Rq = -Rq - Rq_L*dL;
   Ru = -Ru - Ru_L*dL;
   [dQ, dU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq, Ru, q_present);
@@ -292,7 +293,7 @@ function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
   % BK = D
   % BR = H
   BK = Rl_L;
-  BR = Rl;
+  BR = -Rl;
 
   % pre-process A matrix
   [AQQ, AQU, AUQ, AUU] = preprocess_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
@@ -301,8 +302,8 @@ function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
   [iABQ, iABU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq_L, Ru_L, q_present);
   BK = BK - (Rl_Q*iABQ + Rl_U*iABU);
 
-  % subtract C(A^{-1}F) from BR, where F=[Rq;Ru]
-  [iAFQ, iAFU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq, Ru, q_present);
+  % subtract C(A^{-1}F) from BR, where F=-[Rq;Ru]
+  [iAFQ, iAFU] = apply_Ainv(AQQ, AQU, AUQ, AUU, -Rq, -Ru, q_present);
   BR = BR - (Rl_Q*iAFQ + Rl_U*iAFU);
 
 function [AQQ, AQU, AUQ, AUU] = preprocess_A(AQQ, AQU, AUQ, AUU, q_present)
