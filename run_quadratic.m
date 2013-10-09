@@ -19,7 +19,7 @@ pv = 7;
 pu = 7;
 pw = 7;
 
-md = mesh(0., 2., 2);
+md = mesh(0., 2., 20);
 
 xnq = create_nodes(pq, 'SegLagrangeGauss');
 xnv = create_nodes(pv, 'SegLagrangeGauss');
