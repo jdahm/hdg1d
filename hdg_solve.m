@@ -17,6 +17,9 @@ function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %   d{Q,U} : update for {Q,U} [nelem*nn{q,u}]
   %   dL : update for L [nelem-1]
 
+  % TEMP ping test
+  % pass = hdg_ping(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
+
   % 1. Build system (K*L=F) (F=-Residual)
   [K, F] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd);
 
@@ -26,6 +29,8 @@ function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   % 3. Post-linear solve
   [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd);
 
+
+% -----------------------------------------------------------------------
 function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   % function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %
@@ -61,11 +66,11 @@ function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     risb = true;
     LE(2,1) = 0.;
   end
-
+  
   xglob = qd.x*md.dx;
 
   [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-  residual_belem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+  hdg_residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
 
   [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 				 Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
@@ -84,7 +89,7 @@ function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     xg = (md.ne-1)*md.dx+qd.x*md.dx;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_ielem(QE, UE, LE, xg, md.dx, td, fd, sd, qd);
+    hdg_residual_ielem(QE, UE, LE, xg, md.dx, td, fd, sd, qd);
 
     [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 				   Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
@@ -109,7 +114,7 @@ function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     xg = (md.ne-1)*md.dx+qd.x*md.dx;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_belem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    hdg_residual_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
 
     [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 				   Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
@@ -121,6 +126,7 @@ function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   K = spdiags(B, -1:1, md.ne-1, md.ne-1);
 
 
+% -----------------------------------------------------------------------
 function [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   % function [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %
@@ -162,7 +168,7 @@ function [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   xg = qd.x*md.dx;
 
   [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-  residual_belem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+  hdg_residual_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
 
   [dQE, dUE] = qu_backsolve(dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 			    Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
@@ -180,7 +186,7 @@ function [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     xg = (elem-1)*md.dx+qd.x*md.dx;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_ielem(QE, UE, LE, xg, md.dx, td, fd, sd, qd);
+    hdg_residual_ielem(QE, UE, LE, xg, md.dx, td, fd, sd, qd);
 
     [dQE, dUE] = qu_backsolve(dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 			      Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
@@ -202,7 +208,7 @@ function [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     xg = (md.ne-1)*md.dx+qd.x*md.dx;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_belem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    hdg_residual_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
 
     [dQE, dUE] = qu_backsolve(dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 			      Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
@@ -212,11 +218,14 @@ function [dQ, dU] = hdg_post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   end
 
 
+% -----------------------------------------------------------------------
 function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-	 residual_belem(Q, U, L, xg, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
+	 hdg_residual_elem(Q, U, L, xg, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
 
-  nnu = size(qd.qPhi, 2);
-  nnq = size(qd.uPhi, 2);
+  nnq = size(qd.qPhi, 2);
+  nnv = size(qd.vPhi, 2);
+  nnu = size(qd.uPhi, 2);
+  nnw = size(qd.wPhi, 2);
 
   UH_Q = zeros([2,nnq]);
   UH_U = zeros([2,nnu]);
@@ -231,7 +240,7 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ..
     UH_Q(1,:) = ub_q*qd.qPhi0;
     UH_U(1,:) = ub_u*qd.uPhi0;
   else
-    UH(1) = L(1);
+    UH(1,1) = L(1);
     UH_L(1,1) = 1.;
   end
 
@@ -244,7 +253,7 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ..
     UH_Q(2,:) = ub_q*qd.qPhi1;
     UH_U(2,:) = ub_u*qd.uPhi1;
   else
-    UH(2) = L(2);
+    UH(2,1) = L(2);
     UH_L(2,2) = 1.;
   end
 
@@ -264,28 +273,21 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ..
   Rl_L = Rl_UH*UH_L;
 
 
+% -----------------------------------------------------------------------
 function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-	 residual_ielem(Q, U, L, xg, dx, td, fd, sd, qd)
+	 hdg_residual_ielem(Q, U, L, xg, dx, td, fd, sd, qd)
+  % function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+  %          hdg_residual_ielem(Q, U, L, xg, dx, td, fd, sd, qd)
+  %
+  % Companion function to hdg_residual_elem (see function for documentation)
+  %
 
   [Rq, Rq_Q, Rq_U, Rq_L] = Rq_elem(Q, U, L, dx, qd);
-
   [Ru, Ru_Q, Ru_U, Ru_L] = Ru_elem(Q, U, L, xg, td, fd, sd, dx, false, false, qd);
-
   [Rl, Rl_Q, Rl_U, Rl_L] = Rl_elem(Q, U, L, fd, false, false, qd);
 
 
-function [dQ, dU] = qu_backsolve(dL, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
-				 Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, q_present)
-
-  % pre-process A matrix
-  [AQQ, AQU, AUQ, AUU] = preprocess_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
-
-  % F - B*dL
-  Rq = -Rq - Rq_L*dL;
-  Ru = -Ru - Ru_L*dL;
-  [dQ, dU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq, Ru, q_present);
-
-
+% -----------------------------------------------------------------------
 function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 					Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, q_present)
 
@@ -300,40 +302,174 @@ function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 
   % subtract C(A^{-1}B) from BK
   [iABQ, iABU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq_L, Ru_L, q_present);
-  BK = BK - (Rl_Q*iABQ + Rl_U*iABU);
+  BK = BK - Rl_U*iABU;
+  if q_present
+    BK = BK - Rl_Q*iABQ;
+  end
 
   % subtract C(A^{-1}F) from BR, where F=-[Rq;Ru]
   [iAFQ, iAFU] = apply_Ainv(AQQ, AQU, AUQ, AUU, -Rq, -Ru, q_present);
-  BR = BR - (Rl_Q*iAFQ + Rl_U*iAFU);
-
-function [AQQ, AQU, AUQ, AUU] = preprocess_A(AQQ, AQU, AUQ, AUU, q_present)
-
-  if q_present % needed because AQQ should not be invertible unless q is present
-    % AQU = AQQ^{-1}*AQU
-    AQU = AQQ\AQU;
-    % AUU -= AUQ*AQU
-    AUU = AUU-AUQ*AQU;
-    % AUQ = AUU^{-1}*AUQ
-    AUQ = AUU\AUQ;
-  end
-
-
-function [Q, U] = apply_Ainv(AQQ, AQU, AUQ, AUU, Q, U, q_present)
-
+  BR = BR - Rl_U*iAFU;
   if q_present
-    % needed again, AQQ should not be invertible unless q is present
-     % Q = AQQ^{-1}*Q
-    Q = AQQ\Q;
+    BR = BR - Rl_Q*iAFQ;
   end
-  % W = -AUU^{-1}*U
-  W = -AUU\U;
-  if q_present
-    % TODO could set Q and BQ to zero to have the same effect as this
-    % if statement
-    % W += AUQ*Q
-    W = W+AUQ*Q;
-    % Q += AQU*W
-    Q = Q+AQU*W;
+
+% -----------------------------------------------------------------------
+function [dQ, dU] = qu_backsolve(dL, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
+				 Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, q_present)
+
+  % pre-process A matrix
+  [AQQ, AQU, AUQ, AUU] = preprocess_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
+
+  % F - B*dL
+  Rq = -Rq - Rq_L*dL;
+  Ru = -Ru - Ru_L*dL;
+
+  [dQ, dU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq, Ru, q_present);
+
+
+% -----------------------------------------------------------------------
+function pass = hdg_ping(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
+
+  % assume passed
+  pass = true;
+
+  nnq = qd.pq+1;
+  nnu = qd.pu+1;
+
+  % first element
+  QE = Q(1:nnq);
+  UE = U(1:nnu);
+  LE(1,1) = 0.;
+
+  lisb = true;
+  if md.ne ~= 1
+    risb = false;
+    LE(2,1) = L(1);
+  else
+    risb = true;
+    LE(2,1) = 0.;
   end
-  % U = -W
-  U = -W;
+
+  xglob = qd.x*md.dx;
+
+  pass_elem = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+  if ~pass_elem
+     pass = false;
+     return;
+  end
+
+  % interior elements
+  for elem=2:md.ne-1
+    QE = Q((elem-1)*nnq+1:elem*nnq);
+    UE = U((elem-1)*nnu+1:elem*nnu);
+    LE = L(elem-1:elem);
+
+    xg = (md.ne-1)*md.dx+qd.x*md.dx;
+    lisb = false;
+    risb = false;
+
+    pass_elem = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    if ~pass_elem
+      pass = false;
+      return;
+    end
+
+  end
+
+  % last element
+  if md.ne > 1
+    QE = Q((md.ne-1)*nnq+1:md.ne*nnq);
+    UE = U((md.ne-1)*nnu+1:md.ne*nnu);
+    LE = [L(md.ne-1); 0.];
+    lisb = false;
+    risb = true;
+
+    xg = (md.ne-1)*md.dx+qd.x*md.dx;
+
+    pass_elem = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    if ~pass_elem
+      pass = false;
+      return;
+    end
+
+  end
+
+
+% -----------------------------------------------------------------------
+function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
+
+  nnq = size(qd.qPhi, 2);
+  nnv = size(qd.vPhi, 2);
+  nnu = size(qd.uPhi, 2);
+  nnw = size(qd.wPhi, 2);
+
+  ep = 1e-1;
+  tol = 1e-12;
+
+  [Rq0, Ru0, Rl0, Rq_Q0, Rq_U0, Rq_L0, Ru_Q0, Ru_U0, Ru_L0, Rl_Q0, Rl_U0, Rl_L0] = ...
+  hdg_residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
+
+  pass = true;
+
+  % loop over q dof
+  for j=1:nnq
+    QE(j) = QE(j) + ep;
+
+    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+    hdg_residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
+
+    QE(j) = QE(j) - ep;
+
+    diff = [Rq-Rq0; Ru-Ru0; Rl-Rl0]/ep;
+    exact = 0.5*[Rq_Q(:,j)+Rq_Q0(:,j); Ru_Q(:,j)+Ru_Q0(:,j); Rl_Q(:,j)+Rl_Q0(:,j)];
+    err = abs(diff - exact);
+    if any(err > tol)
+      err
+      warning('Ping error: Q residuals, j=%d', j)
+      pass = false;
+      return;
+    end
+  end
+
+  % loop over u dof
+  for j=1:nnu
+    UE(j) = UE(j) + ep;
+
+    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+    hdg_residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
+
+    UE(j) = UE(j) - ep;
+
+    diff = [Rq-Rq0; Ru-Ru0; Rl-Rl0]/ep;
+    exact = 0.5*[Rq_U(:,j)+Rq_U0(:,j); Ru_U(:,j)+Ru_U0(:,j); Rl_U(:,j)+Rl_U0(:,j)];
+    err = abs(diff - exact);
+    if any(err > tol)
+      err
+      warning('Ping error: U residuals, j=%d', j)
+      pass = false;
+      return;
+    end
+  end
+
+  % loop over l dof
+  for j=1:2
+    LE(j) = LE(j) + ep;
+
+    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+    hdg_residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
+
+    LE(j) = LE(j) - ep;
+
+    diff = [Rq-Rq0; Ru-Ru0; Rl-Rl0]/ep;
+    exact = 0.5*[Rq_L(:,j)+Rq_L0(:,j); Ru_L(:,j)+Ru_L0(:,j); Rl_L(:,j)+Rl_L0(:,j)];
+    err = abs(diff - exact);
+    if any(err > tol)
+      err
+      warning('Ping error: L residual j=%d', j)
+      pass = false;
+      return;
+    end
+  end
+
+

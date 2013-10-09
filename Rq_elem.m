@@ -1,7 +1,7 @@
 function [R, R_Q, R_U, R_UH] = Rq_elem(Q, U, uh, dx, qd)
   % function [R, R_Q, R_U, R_UH] = Rq_elem(Q, U, uh, dx, qd)
   %
-  % PURPOSE: Computes the bilinear form Rq((q,u,uh),v) : Qh x Uh x Mh x Vh -> Vh*
+  % PURPOSE: Computes the bilinear form R((q,u,uh),v) : Qh x Uh x Mh x Vh -> Vh*
   % restricted to an element and linearization wrt each input. This is:
   %
   % (q,v) + (u,div(v)) - <uh,v.n> = 0 forall v in Vh

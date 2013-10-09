@@ -1,11 +1,12 @@
 % Quadratic manufactured solution
 
 fd.a = 1;
-fd.b = 1e-3;
-fd.q_present = false;
-fd.vl = 1e-3*fd.b;
+fd.b = 1;
+fd.q_present = true;
+fd.stab_type = 'centered';
+fd.vl = 1.0;
 
-sd.present = false;
+sd.present = true;
 sd.type = 'ms_quadratic';
 
 %dt = 1.0;
@@ -13,22 +14,22 @@ sd.type = 'ms_quadratic';
 td.c = 0.0;
 td.u_t = 0.0;
 
-pq = 5;
-pv = 5;
-pu = 5;
-pw = 5;
+pq = 7;
+pv = 7;
+pu = 7;
+pw = 7;
 
-md = mesh(0., 2., 10);
+md = mesh(0., 2., 2);
 
-xnq = linspace(0,1,pq+1)';
-xnv = linspace(0,1,pv+1)';
-xnu = linspace(0,1,pu+1)';
-xnw = linspace(0,1,pw+1)';
+xnq = create_nodes(pq, 'SegLagrangeGauss');
+xnv = create_nodes(pv, 'SegLagrangeGauss');
+xnu = create_nodes(pu, 'SegLagrangeGauss');
+xnw = create_nodes(pw, 'SegLagrangeGauss');
 
 lbd.type = 'd';
-lbd.data = 2;
-rbd.type = 'n';
-rbd.data = 0;
+lbd.data = 0.;
+rbd.type = 'd';
+rbd.data = 0.;
 
 [Q, U, L] = initialize(pq, pu, md.ne);
 
@@ -42,6 +43,3 @@ L = L + dL;
 
 figure(1);
 h1 = plot_elems(md.xs, md.xe, xnu, U, 100);
-%plot_trace(xs, xe, b0d, b1d, L);
-%figure(2);
-%h2 = plot_elems(xs, xe, xnq, Q, 10);

@@ -1,10 +1,13 @@
 function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh, fd, lisb, risb, qd)
-  % function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh0, uh1, td, fd, sd, dx, qd)
+  % function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh0, uh1, td, fd, sd, dx, qd)
   %
-  % PURPOSE: Computes the bilinear form Rl((q,u,uh),w) : Qh x Uh x Mh x Mh -> Mh*
+  % PURPOSE: Computes the bilinear form R((q,u,uh),m) : Qh x Uh x Mh x Mh -> Mh*
   % restricted to an element and linearization wrt each input. This is:
   %
   % <[HH],m> = 0 forall m in Mh
+  %
+  % NOTE: On interior elements, computes a one-sided stabilized flux on both edges,
+  % on boundary edges, computes the flux H(q,uh)
   %
   % INPUTS:
   %   {Q,U} : basis coefficients for {grad(u),u} [nn{q,u}]
@@ -27,38 +30,29 @@ function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh, fd, lisb, risb, qd)
   u0 = qd.uPhi0 * U;
   u1 = qd.uPhi1 * U;
 
-  if ~lisb
-    [h0, h_q0, h_UH0] = flux(q0, uh(1), fd);
-    [s0, s_q0, s_u0, s_UH0] = flux_stab(q0, u0, uh(1), fd);
-    f0 = h0 + s0;
-    f_Q0 = bsxfun(@times, h_q0+s_q0, qd.qPhi0);
-    f_U0 = bsxfun(@times, s_u0, qd.uPhi0);
-    f_UH0 = h_UH0 + s_UH0;
-  else
-    [f0, f_q0, f_UH0] = flux(q0, uh(1), fd);
-    f_Q0 = bsxfun(@times, f_q0, qd.qPhi0);
-    f_U0 = zeros([1,nnu]);
-  end
+  n0 = -1.;
+  n1 = 1.;
 
-  if ~risb
-    [h1, h_q1, h_UH1] = flux(q1, uh(2), fd);
-    [s1, s_q1, s_u1, s_UH1] = flux_stab(q1, u1, uh(2), fd);
-    f1 = h1 + s1;
-    f_Q1 = bsxfun(@times, h_q1+s_q1, qd.qPhi1);
-    f_U1 = bsxfun(@times, s_u1, qd.uPhi1);
-    f_UH1 = h_UH1 + s_UH1;
-  else
-    [f1, f_q1, f_UH1] = flux(q1, uh(2), fd);
-    f_Q1 = bsxfun(@times, f_q1, qd.qPhi1);
-    f_U1 = zeros([1,nnu]);
-  end
+  [h0, h_q0, h_UH0] = flux(q0, uh(1), fd);
+  [s0, s_q0, s_u0, s_UH0] = flux_stab(q0, u0, uh(1), n0, fd);
+  f0 = n0*h0 + s0;
+  f_Q0 = (n0*h_q0+s_q0)*qd.qPhi0;
+  f_U0 = s_u0*qd.uPhi0;
+  f_UH0 = n0*h_UH0 + s_UH0;
+
+  [h1, h_q1, h_UH1] = flux(q1, uh(2), fd);
+  [s1, s_q1, s_u1, s_UH1] = flux_stab(q1, u1, uh(2), n1, fd);
+  f1 = n1*h1 + s1;
+  f_Q1 = (n1*h_q1+s_q1)*qd.qPhi1;
+  f_U1 = s_u1*qd.uPhi1;
+  f_UH1 = n1*h_UH1 + s_UH1;
 
   % Rl = <[HH],m>
-  R(1,1)    = -f0;
+  R(1,1)    = f0;
   R(2,1)    = f1;
-  R_Q(1,:)  = -f_Q0;
+  R_Q(1,:)  = f_Q0;
   R_Q(2,:)  = f_Q1;
-  R_U(1,:)  = -f_U0;
+  R_U(1,:)  = f_U0;
   R_U(2,:)  = f_U1;
-  R_UH(1,1) = -f_UH0;
+  R_UH(1,1) = f_UH0;
   R_UH(2,2) = f_UH1;

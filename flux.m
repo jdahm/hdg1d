@@ -16,4 +16,4 @@ function [f, f_q, f_u] = flux(q, u, fd)
 
   f   = fd.a*u - fd.b*q;
   f_u = fd.a*ones(size(u));
-  f_q = fd.b*ones(size(q));
+  f_q = -fd.b*ones(size(q));

@@ -17,13 +17,18 @@ function [s, s_q, s_u] = source(q, u, xg, fd, sd)
   %
 
   if sd.present
-    s_q = zeros(size(q));
-    s_u = zeros(size(u));
     switch (sd.type)
       case 'ms_quadratic'
 	% u=2x-x^2 on [0,2]
 	% S = -a*u_x + b*u_xx = -a*(2-2*x)+b*(-2) = -2*(a+b)+2*x*a
 	s = -2*(fd.a+fd.b)+2*fd.a*xg;
+	s_q = zeros(size(q));
+	s_u = zeros(size(u));
+      case 'linear'
+	% (b=0) s=sd.c*u -> u=exp(x/a)
+	s = sd.c*u;
+	s_q = zeros(size(q));
+	s_u = sd.c*ones(size(u));
       otherwise
 	error('unknown source term');
     end
