@@ -1,0 +1,111 @@
+\documentclass[12pt,letter]{article}
+
+\usepackage{amsmath,amsfonts,bm}
+\usepackage[margin=1in]{geometry}
+
+\newcommand{\sbf}[1]{\boldsymbol{#1}}
+\newcommand{\mbf}[1]{\mathbf{#1}}
+\newcommand{\mbb}[1]{\mathbb{#1}}
+\newcommand{\mcal}[1]{\mathcal{#1}}
+
+\newcommand{\mth}{{\mcal{T}_h}}
+\newcommand{\dmth}{{\partial\mcal{T}_h}}
+
+\begin{document}
+
+\section{Abstract}
+We present a new version of the hybrid discontinuous Galerkin (HDG)
+finite-element method that displays optimal convergence in chosen
+outputs of interest. HDG methods are a new, efficient approach to
+numerically solving fluid problems. However, on their own, they don't
+achieve optimal stability or output accuracy. To make HDG optimal, we
+introduce ideas from discontinous Petrov-Galerkin (DPG) methods, which
+are provably optimal in the above respects. We apply our new HDG-DPG
+method to the advection-diffusion equation and show that it is both
+more efficient and accurate than standard finite-element methods.
+
+\section{Introduction}
+
+The goal of this work is to develop methods for solving
+convection-diffusion systems of the form
+\begin{equation*}
+u_t + \nabla \cdot \left( F(u) - G(\nabla u,u)\right) + S(\nabla u, u) = 0.
+\end{equation*}
+
+In order to simplify the analysis and show results most clearly the
+equation above is solved with a linear flux in one dimension without a
+time derivative,
+%
+\begin{equation}
+\begin{cases}
+  \nabla \cdot \left( \mbf{a}\,u - b\,\nabla u \right) + S(\nabla u,u) = 0,\quad x \in \Omega,\qquad &\mathrm{General} \\
+  (a\,u - b\,u_x)_x + S(u_x,u) = 0,\quad x \in [x_s,\,x_e],\qquad &\mathrm{1D}
+\end{cases}
+\end{equation}
+%
+with appropriate boundary conditions at $x_s$ and $x_e$.  Note that if
+$b \ne 0$, $u\in H^2(\Omega)$, otherwise $u\in H^1(\Omega)$.
+
+Both methods considered here instead solve a system of first-order
+equations of the form
+%
+\begin{equation*}
+\begin{cases}
+  \mbf{q} - \nabla u = 0,\quad \nabla \cdot (\mbf{a}\,u - b\,\mbf{q}) + S(\mbf{q},u) = 0 &\mathrm{General} \\
+  q-u_x=0,\quad (a\,u-b\,q)_x + S(q,u) = 0 &\mathrm{1D}
+\end{cases}
+\end{equation*}
+%
+
+The domain is broken up into elements $K$ and approximate solutions
+$u_h \in \mcal{P}^{p_u}(K)$ and $\mbf{q}_h \in \mcal{P}^{p_q}(K)$ are found
+on each of these.  The union of all elements is denoted $\mcal{T}_h$.
+
+Both methods determine the approximate solutions by integrating the
+above equations against test functions spanning the desired
+approximate solution space, integrating once by parts.  In general, this is
+
+\begin{align}
+(\mbf{q}_h,\mbf{v})_\mth + (u_h,\nabla \cdot \mbf{v})_\mth - \langle \hat{u}, \mbf{v} \cdot \mbf{n}  \rangle_\dmth = 0,\qquad \forall \mbf{v} \in \sbf{\mcal{V}}_h \\
+-(\mbf{H},\nabla w)_\mth + \langle \hat{H}, w \rangle_\dmth + (S,w)_\mth = 0,\qquad \forall w \in \mcal{W}_h 
+\end{align}
+%
+where $\hat{u}$ is the trace of u, $\mbf{H} = \mbf{a} u_h - b \mbf{q}_h$ is the flux, and $\hat{H}(\mbf{q}_h|_F,u_h|_F,\hat{u})$ is the ``one-sided'' numerical flux on a face $F$.  In general this takes the form
+%
+\begin{equation}
+\hat{H}(\mbf{q},u,\hat{u}) = 
+\begin{cases}
+\mbf{H}(\mbf{q},\hat{u}) \cdot \mbf{n} + \sbf{\tau} (u - \hat{u}) \cdot \mbf{n} & \mathrm{interior\;faces} \\
+H_R(\mbf{q},u,\hat{u}) + \sbf{\tau} (u - \hat{u}) \cdot \mbf{n} & \mathrm{boundary\;faces}
+\end{cases}
+\end{equation}
+%
+where $H_R$ is the normal flux computed from the solution to a Riemann
+problem between the states $u$ and $\hat{u}$.  This is needed to
+properly deal with incoming and outgoing characteristics at the
+boundaries.  In 1D the equations reduce to
+%
+\begin{align*}
+(q_h,v)_\mth + (u,v_x)_\mth - \langle \hat{u}, v\,n \rangle_\dmth = 0 \qquad \forall v \in \mcal{V}_h \\
+-(H,w_x)_\mth + \langle \hat{H}, w \rangle_\dmth + (S,w)_\mth = 0 \qquad \forall w \in \mcal{W}_h.
+\end{align*}
+%
+where $n=+1$ for the right interface of an element, and $n=-1$ for the left interface.
+
+Due to the addition of the trace $\hat{u}$ as an approximation to $u$
+on each face, more equations are needed to solve the system.
+Alternatively, without another constraint, due to the one-sided nature
+of the element-coupling fluxes the method will not be conservative.
+Naturally, this constraint takes the form
+%
+\begin{equation}
+\langle \hat{H}, \mu \rangle_\dmth = 0 \qquad \forall \mu \in \mcal{M}_h.
+\end{equation}
+%
+
+\section{HDG discretization}
+
+\section{HDG-DPG discretization}
+
+
+\end{document}
