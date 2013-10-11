@@ -14,12 +14,12 @@ sd.present = false;
 td.c = 0.0;
 td.u_t = 0.0;
 
-pq = 2;
-pv = 2;
-pu = 2;
-pw = 2;
+pq = 0;
+pv = 0;
+pu = 0;
+pw = 0;
 
-md = mesh(0., 1., 4);
+md = mesh(0., 1., 2);
 
 xnq = create_nodes(pq, 'SegLagrangeGauss');
 xnv = create_nodes(pv, 'SegLagrangeGauss');

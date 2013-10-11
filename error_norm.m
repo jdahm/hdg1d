@@ -12,7 +12,7 @@ function err = error_norm(xnq, xnu, Q, U, L, qorder, md, fd, norm_type, varargin
 	error('need u(fd,x), du(fd,x)');
       end
       u = varargin{1};
-      u_x = varargin{1};
+      u_x = varargin{2};
     otherwise
       error('unknown norm type');
   end
@@ -65,6 +65,7 @@ function err = error_norm(xnq, xnu, Q, U, L, qorder, md, fd, norm_type, varargin
     err = sqrt(err);
   elseif strcmp(norm_type, 'H1')
     err = sqrt(erru + errq);
+  elseif strcmp(norm_type, 'L1')
   else
     error('unknown norm type');
   end
