@@ -1,4 +1,4 @@
-function GPhi = gbasis(xn, x);
+function GPhi = gbasis(xn, x)
 % evaluates basis function gradients at x
 
 n = length(x);

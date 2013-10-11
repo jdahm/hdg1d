@@ -1,5 +1,5 @@
 function h = plot_elems(xs, xe, xn, U, np)
-  % function h = plot_elems(xs, xe, p, U, np)
+  % function h = plot_elems(xs, xe, xn, U, np)
   %
   % PURPOSE: Plots a scalar quantity over the elements in the mesh
   %
@@ -23,7 +23,6 @@ function h = plot_elems(xs, xe, xn, U, np)
 
   dx = (xe-xs)/ne;
 
-  clf;
   hold on;
   for elem=1:ne
       y = Phi*U((elem-1)*nn+1:elem*nn);

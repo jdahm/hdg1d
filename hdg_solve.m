@@ -86,7 +86,7 @@ function [K, R] = hdg_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     UE = U((elem-1)*nnu+1:elem*nnu);
     LE = L(elem-1:elem);
 
-    xg = (md.ne-1)*md.dx+qd.x*md.dx;
+    xg = (elem-1)*md.dx+qd.x*md.dx;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
     hdg_residual_ielem(QE, UE, LE, xg, md.dx, td, fd, sd, qd);
@@ -234,7 +234,7 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ..
   if lisb
     q0 = qd.qPhi0*Q;
     u0 = qd.uPhi0*U;
-    [ub, ub_q, ub_u] = boundary_state(q0, u0, td, fd, lbd);
+    [ub, ub_q, ub_u] = boundary_state(q0, u0, fd, lbd);
 
     UH(1) = ub;
     UH_Q(1,:) = ub_q*qd.qPhi0;
@@ -247,7 +247,7 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ..
   if risb
     q1 = qd.qPhi1*Q;
     u1 = qd.uPhi1*U;
-    [ub, ub_q, ub_u] = boundary_state(q1, u1, td, fd, rbd);
+    [ub, ub_q, ub_u] = boundary_state(q1, u1, fd, rbd);
 
     UH(2) = ub;
     UH_Q(2,:) = ub_q*qd.qPhi1;

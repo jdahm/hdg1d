@@ -1,5 +1,5 @@
-function [ub, ub_q, ub_u] = boundary_state(q, u, td, fd, bd)
-  % function [ub, ub_q, ub_u] = boundary_state(q, u, td, fd, bd)
+function [ub, ub_q, ub_u] = boundary_state(q, u, fd, bd)
+  % function [ub, ub_q, ub_u] = boundary_state(q, u, fd, bd)
   %
   % PURPOSE: Computes the boundary state ub(q,u) and linearization
   % at a point.
@@ -7,7 +7,6 @@ function [ub, ub_q, ub_u] = boundary_state(q, u, td, fd, bd)
   % INPUTS:
   %   q : grad(u) (= u_x for 1D) at points [np]
   %   u : scalar at points [np]
-  %   td : time data [struct]
   %   fd : flux data [struct]
   %   bd : boundary data [struct]
   %

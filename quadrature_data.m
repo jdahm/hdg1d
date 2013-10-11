@@ -12,6 +12,12 @@ function qd = quadrature_data(xnq, xnu, xnv, xnw)
 
   % create struct
   qd = struct;
+  
+  % store nodes
+  qd.xnq = xnq;
+  qd.xnv = xnv;
+  qd.xnu = xnu;
+  qd.xnw = xnw;
 
   % polynomial orders
   qd.pq = length(xnq)-1;
@@ -29,20 +35,20 @@ function qd = quadrature_data(xnq, xnu, xnv, xnw)
 
   % bases
   qd.vPhi  = basis(xnv, qd.x);
-  qd.vPhi0 = basis(xnv, [0.0]);
-  qd.vPhi1 = basis(xnv, [1.0]);
+  qd.vPhi0 = basis(xnv, 0.0);
+  qd.vPhi1 = basis(xnv, 1.0);
 
   qd.wPhi  = basis(xnw, qd.x);
-  qd.wPhi0 = basis(xnw, [0.0]);
-  qd.wPhi1 = basis(xnw, [1.0]);
+  qd.wPhi0 = basis(xnw, 0.0);
+  qd.wPhi1 = basis(xnw, 1.0);
 
   qd.qPhi  = basis(xnq, qd.x);
-  qd.qPhi0 = basis(xnq, [0.0]);
-  qd.qPhi1 = basis(xnq, [1.0]);
+  qd.qPhi0 = basis(xnq, 0.0);
+  qd.qPhi1 = basis(xnq, 1.0);
 
   qd.uPhi  = basis(xnu, qd.x);
-  qd.uPhi0 = basis(xnu, [0.0]);
-  qd.uPhi1 = basis(xnu, [1.0]);
+  qd.uPhi0 = basis(xnu, 0.0);
+  qd.uPhi1 = basis(xnu, 1.0);
 
   % gradients wrt reference space
   qd.vGPhi = gbasis(xnv, qd.x);

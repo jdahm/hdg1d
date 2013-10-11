@@ -9,19 +9,19 @@ fd.vl = 1;
 
 sd.present = true;
 sd.type = 'linear';
-sd.c = 1.0;
+sd.c = -1.0;
 
 %dt = 1.0;
 %td.c = 1.0/dt;
 td.c = 0.0;
 td.u_t = 0.0;
 
-pq = 4;
-pv = 4;
-pu = 4;
-pw = 4;
+pq = 1;
+pv = 1;
+pu = 1;
+pw = 1;
 
-md = mesh(0., 2., 3);
+md = mesh(0., 1., 8);
 
 xnq = create_nodes(pq, 'SegLagrangeGauss');
 xnv = create_nodes(pv, 'SegLagrangeGauss');
@@ -45,6 +45,7 @@ L = L + dL;
 
 figure(1); clf;
 h1 = plot_elems(md.xs, md.xe, xnu, U, 100);
+h1 = plot_traces(md.xs, md.xe, L);
 
 % plot exact solution
 x = linspace(0,1,100);

@@ -1,4 +1,4 @@
-function Phi = basis(xn, x);
+function Phi = basis(xn, x)
 % evaluates basis functions at x
 
 n = length(x);

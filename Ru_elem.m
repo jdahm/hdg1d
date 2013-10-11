@@ -35,27 +35,45 @@ function [R, R_Q, R_U, R_UH] = Ru_elem(Q, U, uh, xg, td, fd, sd, dx, lisb, risb,
   n0 = -1.;
   n1 = 1.;
 
-  [h0, h_q0, h_UH0] = flux(q0, uh(1), fd);
-  [s0, s_q0, s_u0, s_UH0] = flux_stab(q0, u0, uh(1), n0, fd);
-  f0 = n0*h0 + s0;
-  f_Q0 = (n0*h_q0+s_q0)*qd.qPhi0;
-  f_U0 = s_u0*qd.uPhi0;
-  f_UH0 = n0*h_UH0 + s_UH0;
+  if lisb
+    [h0, h_q0, h_u0, h_UH0] = flux_bc(q0, u0, uh(1), n0, fd);
+  else
+    [h0, h_q0, h_UH0] = flux(q0, uh(1), fd);
+    h_u0 = 0.;
+    % dot with normal
+    h0 = h0*n0;
+    h_q0 = h_q0*n0;
+    h_UH0 = h_UH0*n0;
+  end
+  [s0, s_u0, s_UH0] = flux_stab(u0, uh(1), n0, fd);
+  f0 = h0 + s0;
+  f_Q0 = h_q0*qd.qPhi0;
+  f_U0 = (h_u0+s_u0)*qd.uPhi0;
+  f_UH0 = h_UH0 + s_UH0;
 
-  [h1, h_q1, h_UH1] = flux(q1, uh(2), fd);
-  [s1, s_q1, s_u1, s_UH1] = flux_stab(q1, u1, uh(2), n1, fd);
-  f1 = n1*h1 + s1;
-  f_Q1 = (n1*h_q1+s_q1)*qd.qPhi1;
-  f_U1 = s_u1*qd.uPhi1;
-  f_UH1 = n1*h_UH1 + s_UH1;
+  if risb
+    [h1, h_q1, h_u1, h_UH1] = flux_bc(q1, u1, uh(2), n1, fd);
+  else
+    [h1, h_q1, h_UH1] = flux(q1, uh(2), fd);
+    h_u1 = 0.;
+    % dot with normal
+    h1 = h1*n1;
+    h_q1 = h_q1*n1;
+    h_UH1 = h_UH1*n1;
+  end
+  [s1, s_u1, s_UH1] = flux_stab(u1, uh(2), n1, fd);
+  f1 = h1 + s1;
+  f_Q1 = h_q1*qd.qPhi1;
+  f_U1 = (h_u1+s_u1)*qd.uPhi1;
+  f_UH1 = h_UH1 + s_UH1;
 
   [f, f_q, f_u] = flux(q, u, fd);
-  f_Q = bsxfun(@times, f_q, qd.qPhi);
-  f_U = bsxfun(@times, f_u, qd.uPhi);
+  f_Q = repmat(f_q, [1, nnq]) .* qd.qPhi;
+  f_U = repmat(f_u, [1, nnu]) .* qd.uPhi;
 
   [s, s_q, s_u] = source(q, u, xg, fd, sd);
-  s_Q = bsxfun(@times, s_q, qd.qPhi);
-  s_U = bsxfun(@times, s_u, qd.uPhi);
+  s_Q = repmat(s_q, [1, nnq]) .* qd.qPhi;
+  s_U = repmat(s_u, [1, nnu]) .* qd.uPhi;
 
   wgPhi = qd.wGPhi/dx;
 
