@@ -26,9 +26,9 @@ function [s, s_q, s_u] = source(q, u, xg, fd, sd)
 	s_u = zeros(size(u));
       case 'linear'
 	% (b=0) s=sd.c*u -> u=exp(x/a)
-	s = sd.c*u;
-	s_q = zeros(size(q));
-	s_u = sd.c*ones(size(u));
+	s = sd.a*u + sd.b*q;
+	s_q = sd.b*ones(size(q));
+	s_u = sd.a*ones(size(u));
       otherwise
 	error('unknown source term');
     end

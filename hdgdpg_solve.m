@@ -17,9 +17,6 @@ function [dQ, dU, dL] = hdgdpg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %   d{Q,U} : update for {Q,U} [nelem*nn{q,u}]
   %   dL : update for L [nelem-1]
 
-  % TEMP ping test
-  % pass = hdg_ping(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
-
   % 1. Build system (K*L=F) (F=-Residual)
   [K, F] = system(Q, U, L, lbd, rbd, md, td, fd, sd, qd);
 
@@ -239,13 +236,13 @@ function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
   A = build_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
 
   if q_present
-    BK = BK - [Rl_Q, Rl_U]*(A\[Rl_Q; Rl_U]);
+    BK = BK - [Rl_Q, Rl_U]*(A\(Rq_L+Ru_L));
   else
-    BK = BK - Rl_U*(A\Rl_U);
+    BK = BK - Rl_U*(A\Ru_L);
   end
 
   if q_present
-    BR = BR - [Rl_Q, Rl_U]*(A\[-Rq; -Ru]);
+    BR = BR - [Rl_Q, Rl_U]*(A\(-(Rq+Ru)));
   else
     BR = BR - Rl_U*(A\(-Ru));
   end
@@ -255,13 +252,14 @@ function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 function [dQ, dU] = qu_backsolve(dL, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 				 Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, q_present)
 
+  nnq = size(Ru_Q, 2);
+  nnu = size(Ru_U, 2);
+
   A = build_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
 
   % F - B*dL
-  Rq = -Rq - Rq_L*dL;
-  Ru = -Ru - Ru_L*dL;
-
-  dQU = A\[Rq; Ru];
+  F = -(Rq+Ru);
+  dQU = A\(F - (Rq_L+Ru_L)*dL);
 
   if q_present
     dQ = dQU(1:nnq);
@@ -284,6 +282,8 @@ function A = build_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present)
   if q_present
     A(:,1:nnq) = Rq_Q;
     A(:,nnq+(1:nnu)) = Rq_U;
+  else
+    nnq = 0;
   end
   A(:,1:nnq) = A(:,1:nnq) + Ru_Q;
   A(:,nnq+(1:nnu)) = A(:,nnq+(1:nnu)) + Ru_U;

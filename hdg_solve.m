@@ -17,9 +17,6 @@ function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %   d{Q,U} : update for {Q,U} [nelem*nn{q,u}]
   %   dL : update for L [nelem-1]
 
-  % TEMP ping test
-  % pass = hdg_ping(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
-
   % 1. Build system (K*L=F) (F=-Residual)
   [K, F] = system(Q, U, L, lbd, rbd, md, td, fd, sd, qd);
 
