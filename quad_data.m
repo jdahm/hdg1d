@@ -1,5 +1,5 @@
-function qd = quadrature_data(xnq, xnu, xnv, xnw)
-  % function qd = quadrature_data(xnq, xnu, xnv, xnw)
+function qd = quad_data(xnq, xnu, xnv, xnw)
+  % function qd = quad_data(xnq, xnu, xnv, xnw)
   %
   % PURPOSE: Creates quadrature data struct used for integration of the bilinear forms
   %

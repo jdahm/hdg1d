@@ -16,12 +16,12 @@ sd.c = -1.0;
 td.c = 0.0;
 td.u_t = 0.0;
 
-pq = 1;
-pv = 1;
-pu = 1;
-pw = 1;
+pq = 4;
+pv = 4;
+pu = 4;
+pw = 4;
 
-md = mesh(0., 1., 8);
+md = mesh(0., 1., 3);
 
 xnq = create_nodes(pq, 'SegLagrangeGauss');
 xnv = create_nodes(pv, 'SegLagrangeGauss');

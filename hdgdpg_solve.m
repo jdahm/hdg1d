@@ -1,5 +1,5 @@
-function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
-  % function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
+function [dQ, dU, dL] = hdgdpg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
+  % function [dQ, dU, dL] = hdgdpg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %
   % PURPOSE: Builds the HDG system K*L=F, solves it, then computes the updates to Q, U, L
   %
@@ -11,7 +11,7 @@ function [dQ, dU, dL] = hdg_solve(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   %   td : time data [struct]
   %   fd : flux data [struct]
   %   sd : source data [struct]
-  %   qd : quadrature data [struct]
+  %   qd : quadrature data with optimal test functions [struct]
   %
   % OUTPUTS:
   %   d{Q,U} : update for {Q,U} [nelem*nn{q,u}]
@@ -180,6 +180,7 @@ function [dQ, dU] = post(dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   dQ(1:nnq) = dQE;
   dU(1:nnu) = dUE;
 
+
   lisb = false;
   risb = false;
 
@@ -235,101 +236,54 @@ function [BK, BR] = static_condensation(Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
   BK = Rl_L;
   BR = -Rl;
 
-  % pre-process A matrix
-  [AQQ, AQU, AUQ, AUU] = preprocess_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
+  A = build_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
 
-  % subtract C(A^{-1}B) from BK
-  [iABQ, iABU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq_L, Ru_L, q_present);
-  BK = BK - Rl_U*iABU;
   if q_present
-    BK = BK - Rl_Q*iABQ;
+    BK = BK - [Rl_Q, Rl_U]*(A\[Rl_Q; Rl_U]);
+  else
+    BK = BK - Rl_U*(A\Rl_U);
   end
 
-  % subtract C(A^{-1}F) from BR, where F=-[Rq;Ru]
-  [iAFQ, iAFU] = apply_Ainv(AQQ, AQU, AUQ, AUU, -Rq, -Ru, q_present);
-  BR = BR - Rl_U*iAFU;
   if q_present
-    BR = BR - Rl_Q*iAFQ;
+    BR = BR - [Rl_Q, Rl_U]*(A\[-Rq; -Ru]);
+  else
+    BR = BR - Rl_U*(A\(-Ru));
   end
+
 
 % -----------------------------------------------------------------------
 function [dQ, dU] = qu_backsolve(dL, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 				 Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, q_present)
 
-  % pre-process A matrix
-  [AQQ, AQU, AUQ, AUU] = preprocess_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
+  A = build_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present);
 
   % F - B*dL
   Rq = -Rq - Rq_L*dL;
   Ru = -Ru - Ru_L*dL;
 
-  [dQ, dU] = apply_Ainv(AQQ, AQU, AUQ, AUU, Rq, Ru, q_present);
-
-
-% -----------------------------------------------------------------------
-function [AQQ, AQU, AUQ, AUU] = preprocess_A(AQQ, AQU, AUQ, AUU, q_present)
-  % function [AQQ, AQU, AUQ, AUU] = preprocess_A(AQQ, AQU, AUQ, AUU, q_present)
-  %
-  % PURPOSE: Takes a block matrix A
-  %   A = [AQQ, AQU; AUQ, AUU]  if q_present is true
-  %   A = [AUU]                 otherwise
-  % and prepares it to be quickly inverted.
-  %
-  % INPUTS:
-  %   {AQQ, AQU, AUQ, AUU} : matrix blocks
-  %   q_present : indicator of number of blocks
-  %
-  % OUTPUTS:
-  %   AQQ : stays same (AQQ)
-  %   AQU : becomes AQQ^{-1}*AUQ
-  %   AUQ : K^{-1}*AUQ where K=(AUU-AUQ*AQQ^{-1}*AUQ)
-  %   AUU : K^{-1}
-  %
-
-  if q_present % needed because AQQ should not be invertible unless q is present
-    % AQU = AQQ^{-1}*AQU
-    AQU = AQQ\AQU;
-    % AUU -= AUQ*AQU
-    AUU = AUU-AUQ*AQU;
-    % AUQ = AUU^{-1}*AUQ
-    AUQ = AUU\AUQ;
-  end
-
-
-% -----------------------------------------------------------------------
-function [Q, U] = apply_Ainv(AQQ, AQU, AUQ, AUU, Q, U, q_present)
-  % function [Q, U] = apply_Ainv(AQQ, AQU, AUQ, AUU, Q, U, q_present)
-  %
-  % PURPOSE: Takes a pre-processed block matrix A and performs
-  %   A^{-1}*[Q;U]
-  % where Q and U can either form a matrix or vector.
-  %
-  % INPUTS:
-  %   {AQQ, AQU, AUQ, AUU} : matrix blocks after pre-processing
-  %   Q : block [nq, c]
-  %   U : block [nu, c]
-  %   q_present : indicator of number of blocks
-  %
-  % OUTPUTS:
-  %   Q : first nq rows of A^{-1}*[Q;U]
-  %   U : last nu rows of A^{-1}*[Q;U]
-  %
+  dQU = A\[Rq; Ru];
 
   if q_present
-    % needed since AQQ should not be invertible unless q is present
-    % Q = AQQ^{-1}*Q
-    Q = AQQ\Q;
-  end
-  % W = -AUU^{-1}*U
-  W = -AUU\U;
-  if q_present
-    % W += AUQ*Q
-    W = W+AUQ*Q;
-    % Q += AQU*W
-    Q = Q+AQU*W;
+    dQ = dQU(1:nnq);
+    dU = dQU(nnq+(1:nnu));
   else
-    Q = zeros(size(Q));
+    dQ = zeros([nnq,1]);
+    dU = dQU(1:nnu);
   end
-  % U = -W
-  U = -W;
 
+
+% -----------------------------------------------------------------------
+function A = build_A(Rq_Q, Rq_U, Ru_Q, Ru_U, q_present)
+
+  nn = size(Ru_U, 1);
+  nnq = size(Ru_Q, 2);
+  nnu = size(Ru_U, 2);
+
+  A = zeros([nn, nn]);
+
+  if q_present
+    A(:,1:nnq) = Rq_Q;
+    A(:,nnq+(1:nnu)) = Rq_U;
+  end
+  A(:,1:nnq) = A(:,1:nnq) + Ru_Q;
+  A(:,nnq+(1:nnu)) = A(:,nnq+(1:nnu)) + Ru_U;
