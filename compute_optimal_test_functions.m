@@ -53,7 +53,7 @@ wl = testd.wleft;
 
 % Compute adjoint stiffness matrix entries (for homogeneous primal eqn)         
 AU_U = wPhiQuad'*qd.dw*wGPhiQuad;
-AU_Q = wGPhiQuad'*qd.dw*vPhiQuad*a - mu*(qd.wPhi1'*qd.vPhi1 - qd.wPhi0'*qd.vPhi0);
+AU_Q = wGPhiQuad'*qd.dw*vPhiQuad*a + mu*(qd.wPhi1'*qd.vPhi1 + qd.wPhi0'*qd.vPhi0);
 AQ_U = vPhiQuad'*qd.dw*wPhiQuad*dx;
 AQ_Q = -vGPhiQuad'*qd.dw*vPhiQuad*b;
 
@@ -74,7 +74,7 @@ end
 
 % Fill adjoint stiffness matrix
 A = [AU_U AU_Q; 
-     AQ_U AQ_Q];
+     AQ_U AQ_Q]
 
 % Compute interior output linearizations
 JIU_U = wPhiQuad'*qd.dw*uPhiQuad*dx;
@@ -89,7 +89,7 @@ JI = [JIU_U JIQ_U;
 % Compute boundary output linearizations (which include BC terms)
 JBU_U = zeros(pw+1,pq+1); % JBU would be nonzero for "u" output
 JBU_Q = zeros(pv+1,pu+1);
-JBQ_U = a*(qd.wPhi1'*qd.qPhi1*wr - qd.wPhi0'*qd.qPhi0*wl) - mu*(qd.wPhi1'*qd.qPhi1*wr - qd.wPhi0'*qd.qPhi0*wl); % JBQ nonzero for "q" output on boundary
+JBQ_U = a*(qd.wPhi1'*qd.qPhi1*wr - qd.wPhi0'*qd.qPhi0*wl) + mu*(qd.wPhi1'*qd.qPhi1*wr + qd.wPhi0'*qd.qPhi0*wl); % JBQ nonzero for "q" output on boundary
 JBQ_Q = -b*(qd.vPhi1'*qd.qPhi1*wr - qd.vPhi0'*qd.qPhi0*wl);
 
 % Fill boundary output linearization matrix (2(pu+pq)+2 columns)

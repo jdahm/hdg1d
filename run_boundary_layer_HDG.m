@@ -3,10 +3,10 @@ close all; clc; clear all;
 
 % flux data 
 fd.a = 1;
-fd.b = 1;
+fd.b = 5e-2;
 fd.q_present = true;
 fd.stab_type = 'upwind';
-fd.vl = 1e6;
+fd.vl = 1e5;
 
 % source data
 sd.present = true;
@@ -20,10 +20,10 @@ td.c = 0.0; % time data (not used for now)
 td.u_t = 0.0;
 
 % orders of trial and test spaces (both u and q)
-pu = 2;
-pq = 2;
-pw = 2;
-pv = 2;
+pu = 0;
+pq = 0;
+pw = 0;
+pv = 0;
 
 % mesh extent and number of elements
 md = mesh(0., 1., 1);
@@ -64,12 +64,24 @@ if fd.a ~=0
     y_x = @(fd, x) fd.a/fd.b*exp(fd.a/fd.b*x)./(exp(fd.a/fd.b)-1);
 else
     y = @(fd, x) lbd.data*(1 - x) + x*rbd.data;
+    y_x = @(fd, x) rbd.data - lbd.data;
 end
 
 % plot exact solution on top
 x = linspace(0,1,1000);
 hold on;
 plot(x, y(fd, x), '--');
+title('solution, u');
+hold off;
+
+% plot numerical gradient, q
+figure;
+h2 = plot_elems(md.xs, md.xe, xnq, Q, 100);
+
+% plot exact gradient
+hold on;
+plot(x, y_x(fd, x), 'r--');
+title('gradient, q');
 hold off;
 
 % get error norm (L1, L2, or H1)
