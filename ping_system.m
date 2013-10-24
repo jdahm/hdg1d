@@ -1,4 +1,4 @@
-function pass = ping_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
+function pass = ping_system(scheme, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
 
   % assume passed
   pass = true;
@@ -22,7 +22,7 @@ function pass = ping_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
 
   xg = qd.x*md.dx;
 
-  pass_elem = ping_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+  pass_elem = ping_elem(scheme, QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
   if ~pass_elem
      pass = false;
      return;
@@ -39,7 +39,7 @@ function pass = ping_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
 
     xg = (md.ne-1)*md.dx+qd.x*md.dx;
 
-    pass_elem = ping_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    pass_elem = ping_elem(scheme, QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
     if ~pass_elem
       pass = false;
       return;
@@ -57,7 +57,7 @@ function pass = ping_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
 
     xg = (md.ne-1)*md.dx+qd.x*md.dx;
 
-    pass_elem = ping_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    pass_elem = ping_elem(scheme, QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
     if ~pass_elem
       pass = false;
       return;
@@ -67,7 +67,7 @@ function pass = ping_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
 
 
 % -----------------------------------------------------------------------
-function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
+function pass = ping_elem(scheme, QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
 
   nnq = size(qd.qPhi, 2);
   nnv = size(qd.vPhi, 2);
@@ -78,7 +78,7 @@ function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, s
   tol = 1e-12;
 
   [Rq0, Ru0, Rl0, Rq_Q0, Rq_U0, Rq_L0, Ru_Q0, Ru_U0, Ru_L0, Rl_Q0, Rl_U0, Rl_L0] = ...
-  residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
+  residual_elem(scheme, QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
 
   pass = true;
 
@@ -87,7 +87,7 @@ function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, s
     QE(j) = QE(j) + ep;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
+    residual_elem(scheme, QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
 
     QE(j) = QE(j) - ep;
 
@@ -107,7 +107,7 @@ function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, s
     UE(j) = UE(j) + ep;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
+    residual_elem(scheme, QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
 
     UE(j) = UE(j) - ep;
 
@@ -127,7 +127,7 @@ function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, s
     LE(j) = LE(j) + ep;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
+    residual_elem(scheme, QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
 
     LE(j) = LE(j) - ep;
 

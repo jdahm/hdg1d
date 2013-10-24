@@ -28,6 +28,7 @@ function [fs, fs_u, fs_uh] = flux_stab(u, uh, n, fd)
 	tau = tau + fd.b/fd.vl;
       end
   end
+  tau = tau*fd.c;
 
   fs   = tau*(u-uh);
   fs_u = tau*1.0;

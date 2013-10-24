@@ -1,4 +1,4 @@
-function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh, fd, lisb, risb, qd)
+function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh, fd, lisb, risb, qd, scheme)
   % function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh0, uh1, td, fd, sd, dx, qd)
   %
   % PURPOSE: Computes the bilinear form R((q,u,uh),m) : Qh x Uh x Mh x Mh -> Mh*
@@ -33,33 +33,30 @@ function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh, fd, lisb, risb, qd)
   n0 = -1.;
   n1 = 1.;
 
-  if lisb
-    [h0, h_q0, h_u0, h_UH0] = flux_bc(q0, u0, uh(1), n0, fd);
-  else
-    [h0, h_q0, h_UH0] = flux(q0, uh(1), fd);
-    h_u0 = 0.;
-    % dot with normal
-    h0 = h0*n0;
-    h_q0 = h_q0*n0;
-    h_UH0 = h_UH0*n0;
-  end
+  [h0, h_q0, h_UH0] = flux(q0, uh(1), fd);
+  h_u0 = 0.;
+
   [s0, s_u0, s_UH0] = flux_stab(u0, uh(1), n0, fd);
+  % dot with normal
+  h0 = h0*n0;
+  h_q0 = h_q0*n0;
+  h_UH0 = h_UH0*n0;
+
+
   f0 = h0 + s0;
   f_Q0 = h_q0*qd.qPhi0;
   f_U0 = (h_u0+s_u0)*qd.uPhi0;
   f_UH0 = h_UH0 + s_UH0;
 
-  if risb
-    [h1, h_q1, h_u1, h_UH1] = flux_bc(q1, u1, uh(2), n1, fd);
-  else
-    [h1, h_q1, h_UH1] = flux(q1, uh(2), fd);
-    h_u1 = 0.;
-    % dot with normal
-    h1 = h1*n1;
-    h_q1 = h_q1*n1;
-    h_UH1 = h_UH1*n1;
-  end
-  [s1, s_u1, s_UH1] = flux_stab(u1, uh(2), n1, fd);
+  [h1, h_q1, h_UH1] = flux(q1, uh(1), fd);
+  h_u1 = 0.;
+
+  [s1, s_u1, s_UH1] = flux_stab(u1, uh(1), n1, fd);
+  % dot with normal
+  h1 = h1*n1;
+  h_q1 = h_q1*n1;
+  h_UH1 = h_UH1*n1;
+
   f1 = h1 + s1;
   f_Q1 = h_q1*qd.qPhi1;
   f_U1 = (h_u1+s_u1)*qd.uPhi1;
@@ -74,3 +71,63 @@ function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh, fd, lisb, risb, qd)
   R_U(2,:)  = f_U1;
   R_UH(1,1) = f_UH0;
   R_UH(2,2) = f_UH1;
+
+%{
+%This is the version with the adjoint consistency fix, but since we
+%aren't using a Riemann solver on the boundaries, this code is
+%deprecated
+    if lisb
+    [h0, h_q0, h_u0, h_UH0] = flux_bc(q0, u0, uh(1), n0, fd);
+    if strcmp(scheme, 'dpg')
+      % adjoint consistency fix
+      taut = 0.5*(fd.a*n0+abs(fd.a*n0)) + fd.b/fd.vl;
+      c0 = -0.5*(fd.a*n0+abs(fd.a*n0))/taut;
+    else
+      c0 = 1.0;
+    end
+  else
+    [h0, h_q0, h_UH0] = flux(q0, uh(1), fd);
+    h_u0 = 0.;
+    % dot with normal
+    h0 = h0*n0;
+    h_q0 = h_q0*n0;
+    h_UH0 = h_UH0*n0;
+    if strcmp(scheme, 'dpg')
+      c0 = fd.c;
+    else
+      c0 = 1.0;
+    end
+  end
+  [s0, s_u0, s_UH0] = flux_stab(u0, uh(1), n0, fd);
+  f0 = h0 + c0*s0;
+  f_Q0 = h_q0*qd.qPhi0;
+  f_U0 = (h_u0+c0*s_u0)*qd.uPhi0;
+  f_UH0 = h_UH0 + c0*s_UH0;
+
+  if risb
+    [h1, h_q1, h_u1, h_UH1] = flux_bc(q1, u1, uh(2), n1, fd);
+    if strcmp(scheme, 'dpg')
+      taut = 0.5*(fd.a*n1+abs(fd.a*n1)) + fd.b/fd.vl;
+      c1 = -0.5*(fd.a*n1+abs(fd.a*n1))/taut;
+    else
+      c1 = 1.0;
+    end
+  else
+    [h1, h_q1, h_UH1] = flux(q1, uh(2), fd);
+    h_u1 = 0.;
+    % dot with normal
+    h1 = h1*n1;
+    h_q1 = h_q1*n1;
+    h_UH1 = h_UH1*n1;
+    if strcmp(scheme, 'dpg')
+      c1 = fd.c;
+    else
+      c1 = 1.0;
+    end
+  end
+  [s1, s_u1, s_UH1] = flux_stab(u1, uh(2), n1, fd);
+  f1 = h1 + c1*s1;
+  f_Q1 = h_q1*qd.qPhi1;
+  f_U1 = (h_u1+c1*s_u1)*qd.uPhi1;
+  f_UH1 = h_UH1 + c1*s_UH1;
+%}
