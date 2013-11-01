@@ -1,15 +1,15 @@
-function err = error_norm(xnq, xnu, Q, U, L, qorder, md, fd, norm_type, varargin)
+function err = error_norm(Q, U, L, xnq, xnu, qorder, md, fd, norm_type, varargin)
 
   % perform a sanity check and pull off the anonymous functions in varargin
   switch norm_type
-    case {'L1', 'L2'}
-      if length(varargin) ~= 1
+    case {'L1', 'L2', 'Trace'}
+      if length(varargin) < 1
 	error('need u(fd,x)');
       end
       u = varargin{1};
     case 'H1'
-      if length(varargin) ~= 2
-	error('need u(fd,x), du(fd,x)');
+      if length(varargin) < 2
+	error('need u(fd,x), u_x(fd,x)');
       end
       u = varargin{1};
       u_x = varargin{2};
@@ -17,14 +17,15 @@ function err = error_norm(xnq, xnu, Q, U, L, qorder, md, fd, norm_type, varargin
       error('unknown norm type');
   end
 
+
   dx = (md.xe - md.xs) / md.ne;
 
   [x,w] = lgwt(qorder, 0, 1);
   qPhi = basis(xnq, x);
   uPhi = basis(xnu, x);
 
-  nnu = length(xnq);
-  nnq = length(xnu);
+  nnq = length(xnq);
+  nnu = length(xnu);
 
   % loop over elements
   err = 0.;
@@ -36,6 +37,20 @@ function err = error_norm(xnq, xnu, Q, U, L, qorder, md, fd, norm_type, varargin
     xg = md.xs+(elem-1)*dx+dx*x;
 
     % get the approximate solution at the quad points
+    if strcmp(norm_type, 'Trace')
+       uhle = u(fd, (elem-1)*md.dx);
+       uhre = u(fd, elem*md.dx);
+       if elem ~= 1
+	 uhla = L(elem-1);
+       else
+	 uhla = uhle;
+       end
+       if elem ~= md.ne
+	 uhra = L(elem);
+       else
+	 uhra = uhre;
+       end
+    end
     if strcmp(norm_type, 'L1') || strcmp(norm_type, 'L2') || strcmp(norm_type, 'H1')
       UE = U((elem-1)*nnu+1:elem*nnu);
       ua = uPhi*UE;
@@ -48,7 +63,9 @@ function err = error_norm(xnq, xnu, Q, U, L, qorder, md, fd, norm_type, varargin
     end
 
     % add to the norms
-    if strcmp(norm_type, 'L1')
+    if strcmp(norm_type, 'Trace')
+      err = err + md.dx*((uhla - uhle)^2 + (uhra - uhre)^2);
+    elseif strcmp(norm_type, 'L1')
       err = err + dx*sum(w.*abs(ua-ue));
     elseif strcmp(norm_type, 'L2')
       err = err + dx*sum(w.*(ua-ue).^2);
@@ -61,7 +78,7 @@ function err = error_norm(xnq, xnu, Q, U, L, qorder, md, fd, norm_type, varargin
   end
 
   % post-summation operation
-  if strcmp(norm_type, 'L2')
+  if strcmp(norm_type, 'L2') || strcmp(norm_type, 'Trace')
     err = sqrt(err);
   elseif strcmp(norm_type, 'H1')
     err = sqrt(erru + errq);

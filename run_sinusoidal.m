@@ -3,10 +3,10 @@
 scheme = 'hdg';
 %scheme = 'dpg';
 
-fd.a = 0;
-fd.b = 10;
+fd.a = 1;
+fd.b = 1e-9;
 fd.q_present = true;
-fd.stab_type = 'centered';
+fd.stab_type = 'upwind';
 fd.vl = 1.0;
 fd.c = 1.0;
 
@@ -17,23 +17,26 @@ sd.name = 'ms_sine';
 td.c = 0.0;
 td.u_t = 0.0;
 
-pq = 1;
-pu = 1;
+pq = 3;
+pu = 3;
 
-pv = 1;
-pw = 1;
+pv = 3;
+pw = 3;
 
 % optimal test function weights (higher weight means more emphasis on
 % boundary portion of output)
 testd.wleft = 1e6;
 testd.wright = 1e6;
 
-md = mesh(0., 1., 2);
+md = mesh(0., 1., 32);
 
-xnq = create_nodes(pq, 'SegLagrange');
-xnv = create_nodes(pv, 'SegLagrange');
-xnu = create_nodes(pu, 'SegLagrange');
-xnw = create_nodes(pw, 'SegLagrange');
+qbasis = 'SegLagrange';
+ubasis = 'SegLagrange';
+
+xnq = create_nodes(pq, qbasis);
+xnv = create_nodes(pv, qbasis);
+xnu = create_nodes(pu, ubasis);
+xnw = create_nodes(pw, ubasis);
 
 lbd.type = 'd';
 lbd.data = 0.;
@@ -75,7 +78,7 @@ end
 figure(2); clf;
 h1 = plot_elems(md.xs, md.xe, xnq, Q, 1000);
 
-% exact solution
+% exact solution on top
 figure(1);
 x = linspace(md.xs, md.xe, 1000);
 y = sin(2*pi*x);
@@ -88,31 +91,9 @@ y_x = 2*pi*cos(2*pi*x);
 hold on;
 plot(x,y_x,'--');
 
-
-n = 1.0;
-switch fd.stab_type
-  case 'centered'
-    tau = abs(fd.a);
-    if fd.q_present
-      tau = tau + fd.b/fd.vl;
-    end
-  case 'upwind'
-    tau = 0.5*(fd.a*n+abs(fd.a*n));
-    if fd.q_present
-      tau = tau + fd.b/fd.vl;
-    end
-end
-tau = tau*fd.c;
-taudiff = fd.b/fd.vl;
-%tau = taudiff;
-Q(end)-tau*(U(end)-rbd.data)/fd.b-2*pi
-Q(end)-2*pi
-
-%err = 0.;
-%for iface=1:md.ne-1
-%    x = iface*md.dx;
-%    err = err + abs(L(iface)-sin(2*pi*x));
-%end
-%err = err / (md.ne-1);
-err = abs(L(1)-sin(2*pi*md.dx));
-err
+%errl = error_norm(Q, U, L, xnq, xnu, pu+1, md, fd, ...
+%		  'Trace', @(fd, x) sin(2*pi*x))
+%erru = error_norm(Q, U, L, xnq, xnu, pu+1, md, fd, ...
+%		  'L2', @(fd, x) sin(2*pi*x))
+%errq = error_norm(Q, U, L, xnq, xnu, pu+1, md, fd, ...
+%		  'H1', @(fd, x) sin(2*pi*x), @(fd, x) 2*pi*cos(2*pi*x))

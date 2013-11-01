@@ -17,16 +17,14 @@ function [ ] = plot_test_functions(P, xn, qd, np)
   %
 
   % test function basis nodes
-  xnv = qd.xnv;
-  xnw = qd.xnw;
-  pw = qd.pw;
-  nnw = pw+1;
+  nn = size(P, 2);
+  p = nn-1;
 
   % reference space for plotting
   xi = linspace(0, 1, np)';
 
   % interpolate test functions to plotting points
-  Phi = basis(xnv, xi);
+  Phi = basis(xn, xi);
   v = Phi*P;
 
   % plot each component of all test functions

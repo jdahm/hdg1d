@@ -71,7 +71,7 @@ function [K, R] = system(scheme, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     xg = (elem-1)*md.dx+qd.x*md.dx;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_elem(scheme, QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    residual_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
 
     [BK, BR] = static_condensation(scheme, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 				   Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);
@@ -140,7 +140,7 @@ function [dQ, dU] = post(scheme, dL, Q, U, L, lbd, rbd, md, td, fd, sd, qd)
     xg = (elem-1)*md.dx+qd.x*md.dx;
 
     [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_elem(scheme, QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
+    residual_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
 
     [dQE, dUE] = qu_backsolve(scheme, dLE, Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, ...
 			      Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L, fd.q_present);

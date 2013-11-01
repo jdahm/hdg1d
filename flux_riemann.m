@@ -1,8 +1,9 @@
-function [f, f_q, f_u, f_uh] = flux_bc(q, u, uh, n, fd)
+function [f, f_q, f_u, f_uh] = flux_riemann(q, u, uh, n, fd)
   % function [f, f_q, f_u, f_uh] = flux_bc(q, u, uh, n, fd)
   %
-  % PURPOSE: Computes the flux dotted with normal on a boundary face.
-  % This uses a Riemann solver to properly upwind the advective part.
+  % PURPOSE: Computes the flux dotted with normal.
+  % This version uses a Riemann solver to properly 
+  % upwind the advective part.
   %
   % INPUTS:
   %   {q,u,uh} : {grad(u),u,boundary value} at interface

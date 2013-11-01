@@ -1,5 +1,5 @@
 function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-	 residual_elem(scheme, Q, U, L, xg, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
+	 residual_elem(Q, U, L, xg, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
 
   nnq = size(qd.qPhi, 2);
   nnv = size(qd.vPhi, 2);
@@ -41,12 +41,12 @@ function [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ..
   Rq_U = Rq_U + Rq_UH*UH_U;
   Rq_L = Rq_UH*UH_L;
 
-  [Ru, Ru_Q, Ru_U, Ru_UH] = Ru_elem(Q, U, UH, xg, td, fd, sd, dx, lisb, risb, qd, scheme);
+  [Ru, Ru_Q, Ru_U, Ru_UH] = Ru_elem(Q, U, UH, xg, td, fd, sd, dx, lisb, risb, qd);
   Ru_Q = Ru_Q + Ru_UH*UH_Q;
   Ru_U = Ru_U + Ru_UH*UH_U;
   Ru_L = Ru_UH*UH_L;
 
-  [Rl, Rl_Q, Rl_U, Rl_UH] = Rl_elem(Q, U, UH, fd, lisb, risb, qd, scheme);
+  [Rl, Rl_Q, Rl_U, Rl_UH] = Rl_elem(Q, U, UH, fd, lisb, risb, qd);
   Rl_Q = Rl_Q + Rl_UH*UH_Q;
   Rl_U = Rl_U + Rl_UH*UH_U;
   Rl_L = Rl_UH*UH_L;

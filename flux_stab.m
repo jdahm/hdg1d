@@ -16,20 +16,8 @@ function [fs, fs_u, fs_uh] = flux_stab(u, uh, n, fd)
   %   fs_{u,uh} : derivative wrt {u,uh}
   %
 
-  switch fd.stab_type
-    case 'centered'
-      tau = abs(fd.a);
-      if fd.q_present
-	tau = tau + fd.b/fd.vl;
-      end
-    case 'upwind'
-      tau = 0.5*(fd.a*n+abs(fd.a*n));
-      if fd.q_present
-	tau = tau + fd.b/fd.vl;
-      end
-  end
-  tau = tau*fd.c;
+  [tau, tau_u, tau_uh] = stab(u, uh, n, fd);
 
   fs   = tau*(u-uh);
-  fs_u = tau*1.0;
-  fs_uh = -tau*1.0;
+  fs_u = tau + tau_u*u;
+  fs_uh = -(tau + tau_uh*uh);

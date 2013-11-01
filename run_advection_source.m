@@ -12,7 +12,6 @@ fd.c = 1.0;
 
 sd.present = true;
 sd.type = 'linear';
-sd.name = 'linear';
 sd.a = -5;
 sd.b = 0;
 
@@ -25,23 +24,25 @@ pu = 2;
 pv = 2;
 pw = 2;
 
+qbasis = 'SegLagrange';
+ubasis = 'SegLagrange';
+
 % optimal test function weights (higher weight means more emphasis on
 % boundary portion of output)
-testd.wleft = 1000;
-testd.wright = 1000;
+testd.wleft = 1e3;
+testd.wright = 1e3;
 
-
-md = mesh(0., 1., 3);
-
-xnq = create_nodes(pq, 'SegLagrange');
-xnv = create_nodes(pv, 'SegLagrange');
-xnu = create_nodes(pu, 'SegLagrange');
-xnw = create_nodes(pw, 'SegLagrange');
+md = mesh(0., 1., 32);
 
 lbd.type = 'd';
 lbd.data = 1.;
 rbd.type = 'n';
 %rbd.data = 0.;
+
+xnq = create_nodes(pq, qbasis);
+xnv = create_nodes(pv, qbasis);
+xnu = create_nodes(pu, ubasis);
+xnw = create_nodes(pw, ubasis);
 
 [Q, U, L] = initialize(pq, pu, md.ne);
 
@@ -50,13 +51,11 @@ qd = quad_data(xnq, xnu, xnv, xnw);
 if strcmp(scheme, 'dpg')
 
   % compute optimal test functions
-  Vopt = compute_optimal_test_functions(fd, qd, md, sd, testd);
+  Vopt = compute_optimal_test_functions(fd, qd, md, sd, lbd, rbd, testd);
 
-  % plot test functions
+  %% plot test functions
   figure(3); clf;
   plot_test_functions(Vopt.w, xnw, qd, 1000);
-  figure(4); clf;
-  plot_test_functions(Vopt.v, xnv, qd, 1000);
 
   % fill DPG quadrature data
   qd = dpg_quad_data(qd, Vopt.v, Vopt.w);
@@ -81,3 +80,8 @@ y = exp(-sd.a/fd.a*x);
 hold on;
 plot(x,y,'--');
 hold off;
+
+erru = error_norm(Q, U, L, xnq, xnu, pu+1, md, fd, ...
+		  'L2', @(fd, x) exp(5/fd.a*x))
+errup = error_norm(Q, PU, L, xnq, pxnu, pu+2, md, fd, ...
+		   'L2', @(fd, x) exp(5/fd.a*x))

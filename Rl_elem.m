@@ -1,4 +1,4 @@
-function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh, fd, lisb, risb, qd, scheme)
+function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh, fd, lisb, risb, qd)
   % function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh0, uh1, td, fd, sd, dx, qd)
   %
   % PURPOSE: Computes the bilinear form R((q,u,uh),m) : Qh x Uh x Mh x Mh -> Mh*
