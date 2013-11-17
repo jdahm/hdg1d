@@ -6,68 +6,32 @@ function pass = ping_system(Q, U, L, lbd, rbd, md, td, fd, sd, qd)
   nnq = qd.pq+1;
   nnu = qd.pu+1;
 
-  % first element
-  QE = Q(1:nnq);
-  UE = U(1:nnu);
-  LE(1,1) = 0.;
-
-  lisb = true;
-  if md.ne ~= 1
-    risb = false;
-    LE(2,1) = L(1);
-  else
-    risb = true;
-    LE(2,1) = 0.;
-  end
-
-  xg = qd.x*md.dx;
-
-  pass_elem = ping_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
-  if ~pass_elem
-     pass = false;
-     return;
-  end
-
-  lisb = false;
-  risb = false;
-
-  % interior elements
-  for elem=2:md.ne-1
+  % loop over elements
+  for elem=1:md.ne
     QE = Q((elem-1)*nnq+1:elem*nnq);
     UE = U((elem-1)*nnu+1:elem*nnu);
-    LE = L(elem-1:elem);
-
-    xg = (md.ne-1)*md.dx+qd.x*md.dx;
-
-    pass_elem = ping_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
-    if ~pass_elem
-      pass = false;
-      return;
-    end
-
-  end
-
-  % last element
-  if md.ne > 1
-    QE = Q((md.ne-1)*nnq+1:md.ne*nnq);
-    UE = U((md.ne-1)*nnu+1:md.ne*nnu);
-    LE = [L(md.ne-1); 0.];
-    lisb = false;
+    LE = [0.0; 0.0];
+    lisb = true;
     risb = true;
 
-    xg = (md.ne-1)*md.dx+qd.x*md.dx;
-
-    pass_elem = ping_elem(QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
-    if ~pass_elem
-      pass = false;
-      return;
+    if elem ~= 1
+       LE(1) = L(elem-1);
+       lisb = false;
+    end
+    if elem ~= md.ne
+       LE(2) = L(elem);
+       risb = false;
     end
 
+    % global positions of quad points
+    xg = (elem-1)*md.dx+qd.x*md.dx;
+
+    pass_elem = ping_elem(elem, QE, UE, LE, xg, lisb, risb, lbd, rbd, md.dx, td, fd, sd, qd);
   end
 
 
 % -----------------------------------------------------------------------
-function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
+function pass = ping_elem(elem, QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd)
 
   nnq = size(qd.qPhi, 2);
   nnv = size(qd.vPhi, 2);
@@ -82,23 +46,24 @@ function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, s
 
   pass = true;
 
-  % loop over q dof
-  for j=1:nnq
-    QE(j) = QE(j) + ep;
-
-    [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
-    residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
-
-    QE(j) = QE(j) - ep;
-
-    diff = [Rq-Rq0; Ru-Ru0; Rl-Rl0]/ep;
-    exact = 0.5*[Rq_Q(:,j)+Rq_Q0(:,j); Ru_Q(:,j)+Ru_Q0(:,j); Rl_Q(:,j)+Rl_Q0(:,j)];
-    err = abs(diff - exact);
-    if any(err > tol)
-      err
-      warning('Ping error: Q residuals, j=%d', j)
-      pass = false;
-      return;
+  if fd.q_present
+    % loop over q dof
+    for j=1:nnq
+      QE(j) = QE(j) + ep;
+      
+      [Rq, Ru, Rl, Rq_Q, Rq_U, Rq_L, Ru_Q, Ru_U, Ru_L, Rl_Q, Rl_U, Rl_L] = ...
+          residual_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, sd, qd);
+      
+      QE(j) = QE(j) - ep;
+      
+      diff = [Rq-Rq0; Ru-Ru0; Rl-Rl0]/ep;
+      exact = 0.5*[Rq_Q(:,j)+Rq_Q0(:,j); Ru_Q(:,j)+Ru_Q0(:,j); Rl_Q(:,j)+Rl_Q0(:,j)];
+      err = abs(diff - exact);
+      if any(err > tol)
+          err
+          warning('Ping error: Q residuals, j=%d', j)
+          pass = false;
+      end
     end
   end
 
@@ -118,7 +83,6 @@ function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, s
       err
       warning('Ping error: U residuals, j=%d', j)
       pass = false;
-      return;
     end
   end
 
@@ -136,8 +100,7 @@ function pass = ping_elem(QE, UE, LE, xglob, lisb, risb, lbd, rbd, dx, td, fd, s
     err = abs(diff - exact);
     if any(err > tol)
       err
-      warning('Ping error: L residual j=%d', j)
+      warning('Elem=%d, Ping error: L residual j=%d', elem, j)
       pass = false;
-      return;
     end
   end

@@ -35,27 +35,26 @@ function [R, R_Q, R_U, R_UH] = Rl_elem(Q, U, uh, fd, lisb, risb, qd)
 
   [h0, h_q0, h_UH0] = flux(q0, uh(1), fd);
   h_u0 = 0.;
-
-  [s0, s_u0, s_UH0] = flux_stab(u0, uh(1), n0, fd);
   % dot with normal
   h0 = h0*n0;
   h_q0 = h_q0*n0;
   h_UH0 = h_UH0*n0;
 
+  [s0, s_u0, s_UH0] = flux_stab(u0, uh(1), n0, fd);
 
   f0 = h0 + s0;
   f_Q0 = h_q0*qd.qPhi0;
   f_U0 = (h_u0+s_u0)*qd.uPhi0;
   f_UH0 = h_UH0 + s_UH0;
 
-  [h1, h_q1, h_UH1] = flux(q1, uh(1), fd);
+  [h1, h_q1, h_UH1] = flux(q1, uh(2), fd);
   h_u1 = 0.;
-
-  [s1, s_u1, s_UH1] = flux_stab(u1, uh(1), n1, fd);
   % dot with normal
   h1 = h1*n1;
   h_q1 = h_q1*n1;
   h_UH1 = h_UH1*n1;
+
+  [s1, s_u1, s_UH1] = flux_stab(u1, uh(2), n1, fd);
 
   f1 = h1 + s1;
   f_Q1 = h_q1*qd.qPhi1;
